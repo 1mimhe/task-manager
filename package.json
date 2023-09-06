@@ -8,5 +8,9 @@
   },
   "keywords": [],
   "author": "Mohammad Hosseini",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "mongoose": "^7.5.0",
+    "validator": "^13.11.0"
+  }
 }
