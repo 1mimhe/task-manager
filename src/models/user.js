@@ -13,6 +13,7 @@ module.exports = mongoose.model('User', {
     email: {
         type: String,
         required: true,
+        unique: true,
         validate: {
             validator: (v) => validator.isEmail(v),
             message: "Your email is not valid."
