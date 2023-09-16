@@ -1,8 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const User = require('../models/user');
+const auth = require('../middlewares/auth');
+const admin = require('../middlewares/admin');
 const bcrypt = require('bcryptjs');
 const _ = require('lodash');
+const toInt = require("validator/es/lib/toInt");
 
 router.post('/register', async (req, res) => {
     try {
@@ -34,9 +37,16 @@ router.post('/login', async (req, res) => {
    }
 });
 
-router.get('/', async (req, res) => {
+// GET /users?pageSize=&pageNumber=
+// default: pageSize=5, pageNumber=1
+router.get('/users', auth, admin, async (req, res) => {
     try {
-        const users = await User.find({});
+        const pageSize = Number(req.query.pageSize) || 5;
+        const pageNumber = Number(req.query.pageNumber) || 1;
+
+        const users = await User.find({})
+            .skip((pageNumber - 1) * pageSize)
+            .limit(pageSize);
 
         if (!users)
             res.status(404).send();
