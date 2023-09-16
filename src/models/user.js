@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const validator = require('validator');
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
 const userSchema = new mongoose.Schema({
     name: {
@@ -32,7 +33,11 @@ const userSchema = new mongoose.Schema({
             message: "Your password is not strong enough."
         }]
     },
-    birthdate: Date
+    birthdate: Date,
+    isAdmin: {
+        type: Boolean,
+        default: false
+    }
 });
 
 userSchema.pre('save', async function(next) {
@@ -42,5 +47,10 @@ userSchema.pre('save', async function(next) {
 
     next();
 });
+
+userSchema.methods.generateAuthToken = function () {
+    return jwt.sign({ _id: this.id, isAdmin: this.isAdmin },
+                                process.env.JWT_PRIVATE_KEY, { expiresIn: '7 days' });
+};
 
 module.exports = mongoose.model('User', userSchema);
