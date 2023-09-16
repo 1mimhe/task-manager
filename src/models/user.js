@@ -61,4 +61,10 @@ userSchema.methods.generateAuthToken = function () {
                                 process.env.JWT_PRIVATE_KEY, { expiresIn: '7 days' });
 };
 
+userSchema.virtual('tasks', {
+    ref: 'Task',
+    localField: '_id',
+    foreignField: 'owner'
+});
+
 module.exports = mongoose.model('User', userSchema);
