@@ -81,8 +81,12 @@ router.patch('/me', auth, async (req, res) => {
         return res.status(400).send('Incorrect old password.');
     req.body.password = req.body.password.new;
 
+    for (const field in req.body) {
+        req.user[field] = req.body[field];
+    }
+
     try {
-        const result = await User.findByIdAndUpdate(req.user._id, req.body, { new: true, runValidators: true });
+        const result = await req.user.save();
         res.send(_.omit(result, ['password']));
     } catch (e) {
         res.status(500).send(e);
@@ -104,11 +108,7 @@ router.delete('/:id', auth, admin, async (req, res) => {
 
 router.delete('/me', auth, async (req, res) => {
     try {
-        const user = await User.findByIdAndDelete(req.user._id);
-
-        if (!user)
-            res.status(404).send();
-
+        const user = await req.user.remove();
         res.send(user);
     } catch (e) {
         res.status(500).send(e);
