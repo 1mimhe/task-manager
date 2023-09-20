@@ -35,6 +35,7 @@ const userSchema = new mongoose.Schema({
         }]
     },
     birthdate: Date,
+    avatar: Buffer,
     isAdmin: {
         type: Boolean,
         default: false

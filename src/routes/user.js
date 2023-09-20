@@ -3,8 +3,10 @@ const router = express.Router();
 const User = require('../models/user');
 const auth = require('../middlewares/auth');
 const admin = require('../middlewares/admin');
+const upload = require('../middlewares/upload');
 const bcrypt = require('bcryptjs');
 const _ = require('lodash');
+const sharp = require('sharp');
 
 // GET /users?pageSize=&pageNumber=
 // default: pageSize=5, pageNumber=1
@@ -43,6 +45,44 @@ router.get('/me', auth, async (req, res) => {
     res.send(req.user);
 });
 
+router.post('/me/avatar', auth, upload.single('avatar'), async (req, res) => {
+    const buffer = await sharp(req.file.buffer).resize({width: 250, height: 250}).png().toBuffer();
+
+    req.user.avatar = buffer;
+    await req.user.save();
+    res.send();
+}, (error, req, res, next) => {
+    res.status(400).send({ error: error.message });
+});
+
+router.get('/me/avatar', auth, async (req, res) => {
+    if (!req.user.avatar) {
+        return res.status(404).send('Avatar not found.');
+    }
+
+    res.set('Content-Type', 'image/png');
+    res.send(req.user.avatar);
+});
+
+router.get('/:id/avatar', auth, admin, async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id);
+
+        if (!user) {
+            return res.status(404).send('User not found with this id.');
+        }
+
+        if (!user.avatar) {
+            return res.status(404).send('User\'s avatar not found.');
+        }
+
+        res.set('Content-Type', 'image/png');
+        res.send(user.avatar);
+    } catch (e) {
+        res.status(400).send();
+    }
+});
+
 router.patch('/:id', auth, admin, async (req, res) => {
     const allowedUpdates = ['name', 'email', 'birthdate', 'isAdmin'];
     const isValidOperation = Object.keys(req.body).every((update) => allowedUpdates.includes(update));
@@ -51,7 +91,7 @@ router.patch('/:id', auth, admin, async (req, res) => {
         res.status(400).send(new Error('Invalid update!'));
 
     try {
-        const result = await User.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+        const result = await User.findByIdAndUpdate(req.params.id, req.body, {new: true, runValidators: true});
         res.send(_.omit(result, ['password']));
     } catch (e) {
         res.status(500).send(e);
